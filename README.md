@@ -12,25 +12,23 @@
 <body>
     <div id="map"></div>
     <script>
-        var map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: 0,
-            maxZoom: 3
-        });
+		var map = L.map('map', {
+			crs: L.CRS.Simple,
+			minZoom: 0,
+			maxZoom: 3
+		});
 
-        var bounds = [[0,0], [8192,8192]];
-        //var image = L.imageOverlay('organized-tiles/3_0_0.png', bounds).addTo(map);
+		var bounds = [[0, 0], [2048, 2048]];
+		map.fitBounds(bounds);
 
-        map.fitBounds(bounds);
-
-        L.tileLayer('organized-tiles/3_{y}_{x}.png', {
-            minZoom: 0,
-            maxZoom: 3,
-            tileSize: 1024,
-            noWrap: true,
-            bounds: bounds,
-            tms: true
-        }).addTo(map);
+		L.tileLayer('organized-tiles/3_{y}_{x}.png', {
+			minZoom: 0,
+			maxZoom: 3,
+			tileSize: 256,  // Cambiado de 1024 a 256
+			noWrap: true,
+			tms: true,
+			bounds: bounds
+		}).addTo(map);
     </script>
 </body>
 </html>
