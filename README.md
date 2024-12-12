@@ -20,11 +20,11 @@
         });
 
         var bounds = [[0,0], [8192,8192]];
-        var image = L.imageOverlay('organized-tiles/3_0_0.png', bounds).addTo(map);
+        //var image = L.imageOverlay('organized-tiles/3_0_0.png', bounds).addTo(map);
 
         map.fitBounds(bounds);
 
-        L.tileLayer('tiles/3_{y}_{x}.png', {
+        L.tileLayer('organized-tiles/3_{y}_{x}.png', {
             minZoom: 0,
             maxZoom: 3,
             tileSize: 1024,
