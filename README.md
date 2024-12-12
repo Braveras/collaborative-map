@@ -20,7 +20,7 @@
         });
 
         var bounds = [[0,0], [8192,8192]];
-        var image = L.imageOverlay('tiles/3_0_0.png', bounds).addTo(map);
+        var image = L.imageOverlay('organized-tiles/3_0_0.png', bounds).addTo(map);
 
         map.fitBounds(bounds);
 
