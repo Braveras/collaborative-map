@@ -18,7 +18,7 @@
 			maxZoom: 3
 		});
 
-		var bounds = [[0, 0], [2048, 2048]];
+		var bounds = [[0, 0], [8192, 8192]];
 		map.fitBounds(bounds);
 
 		L.tileLayer('organized-tiles/3_{y}_{x}.png', {
