@@ -5,10 +5,10 @@ document.addEventListener('DOMContentLoaded', function() {
         minZoom: 3,
         maxZoom: 3,
         tileSize: 256,
-        attribution: 'Custom Map'
+        attribution: 'Corepunk map test',
+		noWrap: true
     }).addTo(map);
 
-    // Set map bounds
     const southWest = map.unproject([0, 2048], map.getMaxZoom());
     const northEast = map.unproject([2048, 0], map.getMaxZoom());
     const bounds = L.latLngBounds(southWest, northEast);
