@@ -1,20 +1,19 @@
 document.addEventListener('DOMContentLoaded', function() {
-    var map = L.map('map', {
-        crs: L.CRS.Simple,
-        minZoom: 0,
-        maxZoom: 3
-    });
+    const map = L.map('map').setView([0, 0], 3);
 
-    var bounds = [[0, 0], [2048, 2048]];
-    var image = L.imageOverlay('overlay/border.svg', bounds).addTo(map);
-    map.fitBounds(bounds);
-
-    L.tileLayer('organized-tiles/3_{y}_{x}.png', {
-        minZoom: 0,
+    L.tileLayer('organized-tiles/{z}_{x}_{y}.png', {
+        minZoom: 3,
         maxZoom: 3,
         tileSize: 256,
-        noWrap: true,
-        tms: true,
-        bounds: bounds
+        attribution: 'Custom Map'
     }).addTo(map);
+
+    // Set map bounds
+    const southWest = map.unproject([0, 2048], map.getMaxZoom());
+    const northEast = map.unproject([2048, 0], map.getMaxZoom());
+    const bounds = L.latLngBounds(southWest, northEast);
+
+    map.setMaxBounds(bounds);
+    map.fitBounds(bounds);
 });
+
