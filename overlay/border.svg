@@ -2,26 +2,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2047.95 1875">
   <defs>
     <style>
-      .cls-1, .cls-2 {
-        stroke: #ea580c;
-      }
+	.cls-1, .cls-2 {
+	  stroke: #3b82f6; 
+	}
 
-      .cls-1, .cls-2, .cls-3 {
-        stroke-miterlimit: 10;
-      }
+	.cls-1, .cls-2, .cls-3 {
+	  stroke-miterlimit: 10;
+	}
 
-      .cls-1, .cls-3 {
-        fill: none;
-      }
+	.cls-1, .cls-3 {
+	  fill: none;
+	}
 
-      .cls-2 {
-        fill: #fff;
-        stroke-width: .4px;
-      }
+	.cls-2 {
+	  fill: #f0f9ff; 
+	  stroke-width: .2px;
+	}
 
-      .cls-3 {
-        stroke: #e94e1b;
-      }
+	.cls-3 {
+	  stroke: #10b981; 
+	}
     </style>
   </defs>
   <g id="Westwind_Woods">

@@ -4,6 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
             [0, 0, 12288, 12288], // Zoom level 1
             [0, 0, 24064, 24064]  // Zoom level 2
         ];
+		
+		const extent = [0, 0, 24064, 24064]
 
         const tileSize = 512;
 
@@ -15,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
             center: [3328, 3328],
             attributionControl: false
         });
-
+		
         L.TileLayer.CustomTiles = L.TileLayer.extend({
             getTileUrl: function(coords) {
                 const z = coords.z;
@@ -56,9 +58,79 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('coordinates').innerHTML = `X: ${Math.floor(point.x)}, Y: ${Math.floor(extents[map.getZoom()][3] - point.y)}`;
         });
 
-        // Ajustar la vista inicial
         const initialExtent = extents[0];
         const southWest = map.unproject([initialExtent[0], initialExtent[3]], 0);
         const northEast = map.unproject([initialExtent[2], initialExtent[1]], 0);
         map.fitBounds(L.latLngBounds(southWest, northEast));
+		
+		
+		
+		var markers = [];
+		var tempMarker = null;
+
+		map.on('click', function(e) {
+			if (tempMarker) {
+				map.removeLayer(tempMarker);
+			}
+			
+			tempMarker = L.marker(e.latlng).addTo(map);
+			
+			var popupContent = `
+				<input type="text" id="markerText" placeholder="Texto del marcador">
+				<select id="markerColor">
+					<option value="red">Rojo</option>
+					<option value="blue">Azul</option>
+					<option value="green">Verde</option>
+				</select>
+				<button onclick="saveMarker()">Guardar</button>
+			`;
+			
+			tempMarker.bindPopup(popupContent).openPopup();
+		});
+
+		window.saveMarker = function() {
+			var text = document.getElementById('markerText').value;
+			var color = document.getElementById('markerColor').value;
+			
+			var icon = new L.Icon({
+				iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+				shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+				iconSize: [25, 41],
+				iconAnchor: [12, 41],
+				popupAnchor: [1, -34],
+				shadowSize: [41, 41]
+			});
+			
+			var marker = L.marker(tempMarker.getLatLng(), {icon: icon}).addTo(map);
+			marker.bindPopup(text);
+			markers.push({lat: marker.getLatLng().lat, lng: marker.getLatLng().lng, text: text, color: color});
+			
+			map.removeLayer(tempMarker);
+			tempMarker = null;
+			saveMarkersToStorage();
+		};
+
+		function saveMarkersToStorage() {
+			localStorage.setItem('mapMarkers', JSON.stringify(markers));
+		}
+
+		function loadMarkersFromStorage() {
+			var storedMarkers = JSON.parse(localStorage.getItem('mapMarkers')) || [];
+			storedMarkers.forEach(function(markerData) {
+				var icon = new L.Icon({
+					iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${markerData.color}.png`,
+					shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+					iconSize: [25, 41],
+					iconAnchor: [12, 41],
+					popupAnchor: [1, -34],
+					shadowSize: [41, 41]
+				});
+				
+				var marker = L.marker([markerData.lat, markerData.lng], {icon: icon}).addTo(map);
+				marker.bindPopup(markerData.text);
+			});
+		}
+
+		loadMarkersFromStorage();
+
 });
