@@ -1,136 +1,141 @@
 document.addEventListener('DOMContentLoaded', function() {
-        const extents = [
-            [0, 0, 6656, 6656],   // Zoom level 0
-            [0, 0, 12288, 12288], // Zoom level 1
-            [0, 0, 24064, 24064]  // Zoom level 2
-        ];
-		
-		const extent = [0, 0, 24064, 24064]
+    // Definimos una única extensión para el nivel de zoom más grande
+    const extent = [0, 0, 24064, 24064]; // Extensión única para el zoom máximo
 
-        const tileSize = 512;
+    const tileSize = 512;
 
-        const map = L.map('map', {
-            crs: L.CRS.Simple,
-            minZoom: 0,
-            maxZoom: 2,
-            zoom: 0,
-            center: [3328, 3328],
-            attributionControl: false
-        });
-		
-        L.TileLayer.CustomTiles = L.TileLayer.extend({
-            getTileUrl: function(coords) {
-                const z = coords.z;
-                const x = coords.x;
-                const y = this.flipY(coords.y, z);
-                return `organized-tiles/${z}/${x}_${y}.png`;
-            },
-            
-            flipY: function(y, z) {
-                const maxTiles = Math.ceil(extents[z][3] / tileSize) - 1;
-                return maxTiles - y;
-            },
+    // Número de tiles por nivel de zoom
+    const tileCounts = [
+        { width: 8, height: 8 },   // Zoom level 0
+        { width: 17, height: 17 }, // Zoom level 1
+        { width: 34, height: 34 }  // Zoom level 2
+    ];
 
-            getTileSize: function() {
-                return L.point(tileSize, tileSize);
-            }
-        });
+    const map = L.map('map', {
+        crs: L.CRS.Simple,
+        minZoom: 1,
+        maxZoom: 2,
+        zoom: 1,
+        center: [-2000, 2000], // Centro inicial en rasterCoords
+        attributionControl: false
+    });
 
-        L.tileLayer.customTiles = function() {
-            return new L.TileLayer.CustomTiles();
-        };
+    L.TileLayer.CustomTiles = L.TileLayer.extend({
+        getTileUrl: function(coords) {
+            const z = coords.z;
+            const x = coords.x;
+            const y = this.flipY(coords.y, z);
+            return `organized-tiles/${z}/${x}_${y}.png`;
+        },
+        
+        flipY: function(y, z) {
+            const maxTilesY = tileCounts[z].height - 1; // Usamos la cantidad correcta de tiles
+            return maxTilesY - y;
+        },
 
-        L.tileLayer.customTiles().addTo(map);
-
-        function updateMapBounds() {
-            const zoom = map.getZoom();
-            const extent = extents[zoom];
-            const southWest = map.unproject([extent[0], extent[3]], zoom);
-            const northEast = map.unproject([extent[2], extent[1]], zoom);
-            map.setMaxBounds(L.latLngBounds(southWest, northEast));
+        getTileSize: function() {
+            return L.point(tileSize, tileSize);
         }
+    });
 
-        map.on('zoomend', updateMapBounds);
-        updateMapBounds();
+    L.tileLayer.customTiles = function() {
+        return new L.TileLayer.CustomTiles({
+            bounds: L.latLngBounds(
+                map.unproject([extent[0], extent[3]], 0), // Esquina suroeste
+                map.unproject([extent[2], extent[1]], 0)  // Esquina noreste
+            )
+        });
+    };
 
-        map.on('mousemove', function(e) {
-            const point = map.project(e.latlng, map.getZoom());
-            document.getElementById('coordinates').innerHTML = `X: ${Math.floor(point.x)}, Y: ${Math.floor(extents[map.getZoom()][3] - point.y)}`;
+    L.tileLayer.customTiles().addTo(map);
+
+    var markers = [];
+    var tempMarker = null;
+
+    map.on('click', function(e) {
+        if (tempMarker) {
+            map.removeLayer(tempMarker);
+        }
+        
+        tempMarker = L.marker(e.latlng).addTo(map);
+        
+        var popupContent = `
+            <input type="text" id="markerText" placeholder="Texto del marcador">
+            <select id="markerColor">
+                <option value="red">Rojo</option>
+                <option value="blue">Azul</option>
+                <option value="green">Verde</option>
+            </select>
+            <button onclick="saveMarker()">Guardar</button>
+        `;
+        
+        tempMarker.bindPopup(popupContent).openPopup();
+    });
+
+    window.saveMarker = function() {
+        var text = document.getElementById('markerText').value;
+        var color = document.getElementById('markerColor').value;
+
+        var iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`;
+        
+        // Obtener las coordenadas del marcador en píxeles (rasterCoords)
+        var markerCoords = map.latLngToContainerPoint(tempMarker.getLatLng());
+        
+        // Guardar el marcador con sus coordenadas y propiedades
+        var markerData = {
+            x: markerCoords.x,
+            y: markerCoords.y,
+            text: text,
+            color: color
+        };
+        
+        markers.push(markerData);
+
+        // Crear y agregar el marcador al mapa usando las coordenadas originales
+        var markerIcon = new L.Icon({
+            iconUrl: iconUrl,
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
         });
 
-        const initialExtent = extents[0];
-        const southWest = map.unproject([initialExtent[0], initialExtent[3]], 0);
-        const northEast = map.unproject([initialExtent[2], initialExtent[1]], 0);
-        map.fitBounds(L.latLngBounds(southWest, northEast));
-		
-		
-		
-		var markers = [];
-		var tempMarker = null;
+        var marker = L.marker(tempMarker.getLatLng(), { icon: markerIcon }).addTo(map);
+        marker.bindPopup(text);
 
-		map.on('click', function(e) {
-			if (tempMarker) {
-				map.removeLayer(tempMarker);
-			}
-			
-			tempMarker = L.marker(e.latlng).addTo(map);
-			
-			var popupContent = `
-				<input type="text" id="markerText" placeholder="Texto del marcador">
-				<select id="markerColor">
-					<option value="red">Rojo</option>
-					<option value="blue">Azul</option>
-					<option value="green">Verde</option>
-				</select>
-				<button onclick="saveMarker()">Guardar</button>
-			`;
-			
-			tempMarker.bindPopup(popupContent).openPopup();
-		});
+        map.removeLayer(tempMarker);
+        tempMarker = null;
 
-		window.saveMarker = function() {
-			var text = document.getElementById('markerText').value;
-			var color = document.getElementById('markerColor').value;
-			
-			var icon = new L.Icon({
-				iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
-				shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-				iconSize: [25, 41],
-				iconAnchor: [12, 41],
-				popupAnchor: [1, -34],
-				shadowSize: [41, 41]
-			});
-			
-			var marker = L.marker(tempMarker.getLatLng(), {icon: icon}).addTo(map);
-			marker.bindPopup(text);
-			markers.push({lat: marker.getLatLng().lat, lng: marker.getLatLng().lng, text: text, color: color});
-			
-			map.removeLayer(tempMarker);
-			tempMarker = null;
-			saveMarkersToStorage();
-		};
+        saveMarkersToStorage();
+    };
 
-		function saveMarkersToStorage() {
-			localStorage.setItem('mapMarkers', JSON.stringify(markers));
-		}
+    function saveMarkersToStorage() {
+        localStorage.setItem('mapMarkers', JSON.stringify(markers));
+    }
 
-		function loadMarkersFromStorage() {
-			var storedMarkers = JSON.parse(localStorage.getItem('mapMarkers')) || [];
-			storedMarkers.forEach(function(markerData) {
-				var icon = new L.Icon({
-					iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${markerData.color}.png`,
-					shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-					iconSize: [25, 41],
-					iconAnchor: [12, 41],
-					popupAnchor: [1, -34],
-					shadowSize: [41, 41]
-				});
-				
-				var marker = L.marker([markerData.lat, markerData.lng], {icon: icon}).addTo(map);
-				marker.bindPopup(markerData.text);
-			});
-		}
+    function loadMarkersFromStorage() {
+        var storedMarkers = JSON.parse(localStorage.getItem('mapMarkers')) || [];
+        
+        storedMarkers.forEach(function(markerData) {
+            var iconUrl = `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${markerData.color}.png`;
+            
+            // Crear y agregar el marcador usando las coordenadas almacenadas (en píxeles)
+            var markerIcon = new L.Icon({
+                iconUrl: iconUrl,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+            
+            var latLng = map.containerPointToLatLng([markerData.x, markerData.y]);
+            
+            var marker = L.marker(latLng, { icon: markerIcon }).addTo(map);
+            marker.bindPopup(markerData.text);
+        });
+    }
 
-		loadMarkersFromStorage();
-
+    loadMarkersFromStorage();
 });
